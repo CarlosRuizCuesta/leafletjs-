@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="assets/lib/leaflet/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="assets/lib/leaflet/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+
+    <style>
+        #mapid { height: 100pc }
+    </style>
+</head>
+<body>
+    <div id="mapid"></div>
+
+
+    <script>
+
+        var map = L.map('mapid').setView([39.74739, -105], 13);
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            maxZoom: 18,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoiY2FybG9zcnVpemN1ZXMiLCJhIjoiY2tnaTRtaWx1MW9oeTJyczFvbWczODhsZiJ9.UIwkCrPIkJ01CR1JtPabDA'
+        }).addTo(map);
+
+        // TYPE FEATURE
+        var geojsonFeature = {
+            "type": "Feature",
+            "properties": {
+                "popupContent": "This is the Auraria West Campus",
+                "style": {
+                    weight: 2,
+                    color: "#999",
+                    opacity: 1,
+                    fillColor: "#B0DE5C",
+                    fillOpacity: 0.8
+                }
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-105.00432014465332, 39.74732195489861]
+            }
+        };
+
+        // Adding options to Marker
+        var geojsonMarkerOptions = {
+            radius: 8,
+            fillColor: "#ff7800",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+
+        // TYPE LINESTRING
+        var geojsonLineString = [{
+            "type": "LineString",
+            "coordinates": [[-105.00432014465332, 39.74732195489861], [-105.01195907592773, 39.74290029616054], [-105.00989913940431, 39.74078835902781]]
+        }, {
+            "type": "LineString",
+            "coordinates": [[-105.00432014465332, 39.74732195489861], [-105.01195907592773, 39.74290029616054], [-105.00989913940431, 39.74078835902781]]
+        }];
+
+        // POLYGON
+        var states = [{
+            "type": "Feature",
+            "properties": {"name": "a"}, // Adding properties
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [-105.00097274780272, 39.74369225589818],
+                    [-105.00097274780272, 39.74461619742136],
+                    [-105.00123023986816, 39.74534214278395],
+                    [-105.00183105468751, 39.74613407445653],
+                    [-105.00432014465332, 39.74732195489861]
+                ]]
+            }
+        }, {
+            "type": "Feature",
+            "properties": {"name": "b"}, // properties
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [-105.00346183776855, 39.74059036160317],
+                    [-105.00097274780272, 39.74059036160317],
+                    [-105.00062942504881, 39.74072235994946],
+                    [-105.00020027160645, 39.74191033368865],
+                    [-105.00071525573731, 39.74276830198601],
+                ]]
+            }
+        }];
+
+        // Adding features filter
+        var someFeatures = [{
+            "type": "Feature",
+            "properties": {
+                "name": "Coors Field",
+                "show_on_map": true
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-105.00346183776855, 39.74059036160317]
+            }
+        }, {
+            "type": "Feature",
+            "properties": {
+                "name": "Busch Field",
+                "show_on_map": false
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-105.00097274780272, 39.74059036160317]
+            }
+        }];
+
+
+        // ADDING
+        L.geoJSON(geojsonLineString).addTo(map);
+        L.geoJSON(geojsonFeature).addTo(map);
+
+        // SET COLOR BY NAME PROPERTIE
+        L.geoJSON(states, {
+            style: function(feature) {
+                switch (feature.properties.name) {
+                    case 'a': return {color: "#ff0000"};
+                    case 'b':   return {color: "#0000ff"};
+                }
+            }
+        }).addTo(map);
+
+        // SET CIRCLE FEATURE
+        L.geoJSON(geojsonFeature, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            }
+        }).addTo(map);
+
+        // Attach a popup to features
+        L.geoJSON(geojsonFeature, {
+            onEachFeature: onEachFeature
+        }).addTo(map);
+
+        // SHOW FEATURES FILTERING
+        L.geoJSON(someFeatures, {
+            filter: function(feature, layer) {
+                return feature.properties.show_on_map;
+            }
+        }).addTo(map);
+
+        /**
+         * PopUp
+         * @param feature
+         * @param layer
+         */
+        function onEachFeature(feature, layer) {
+            // does this feature have a property named popupContent?
+            if (feature.properties && feature.properties.popupContent) {
+                layer.bindPopup(feature.properties.popupContent);
+            }
+        }
+
+    </script>
+</body>
+</html>
