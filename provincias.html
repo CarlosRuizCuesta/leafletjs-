@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8" />
+    <title>Display a map</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+    <script src="assets/js/PulsingDot.js"></script>
+    <script src="assets/js/sample-geojson.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #info {
+            display: none;
+            font-size: 13px;
+            box-sizing: border-box;
+            position: absolute;
+            z-index: 40;
+            top: 12px;
+            left: 12px;
+            background-color: white;
+            border: 1px solid #999;
+            border-radius: 9px;
+            padding: 5px 4px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id='info'>
+    <p>provincia: <span id="prov_name"></span></p>
+    <p>geo_point_2d: <span id="prov_geo_point"></span></p>
+    <p>ccaa: <span id="prov_ccaa"></span></p>
+</div>
+<script>
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9zcnVpemN1ZXMiLCJhIjoiY2tnaTRtaWx1MW9oeTJyczFvbWczODhsZiJ9.UIwkCrPIkJ01CR1JtPabDA';
+    var infoDiv = document.getElementById("info");
+    var hoveredStateId = null;
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v11', // style URL
+        center: [-3.6474549000000005, 40.4792519], // starting position [lng, lat]
+        zoom: 5 // starting zoom
+    });
+
+    map.on('load', function() {
+        var url = 'assets/geojson/IBES_Provincias.geojson';
+
+        map.addSource('states', { type: 'geojson', data: url, generateId: true});
+
+        map.addLayer({
+            'id': 'state-fill',
+            'type': 'fill',
+            'source': 'states',
+            'layout': {},
+            'paint': {
+                'fill-color': '#627BC1',
+                'fill-opacity': [
+                    'case',
+                    ['boolean', ['feature-state', 'hover'], false],
+                    1,
+                    0.5
+                ]
+            }
+        });
+
+        map.addLayer({
+            'id': 'state-borders',
+            'type': 'line',
+            'source': 'states',
+            'layout': {},
+            'paint': {
+                'line-color': '#627BC1',
+                'line-width': 2
+            }
+        });
+
+        // When the user moves their mouse over the state-fill layer, we'll update the
+        // feature state for the feature under the mouse.
+        map.on('mousemove', 'state-fill', function (e) {
+            if (e.features.length > 0) {
+                fillEffect(e);
+                completeData(e);
+            }
+        });
+
+
+        // When the mouse leaves the state-fill layer, update the feature state of the
+        // previously hovered feature.
+        map.on('mouseleave', 'state-fill', function () {
+            unfillEffect();
+            hideData();
+        });
+    });
+
+    function completeData(e) {
+        var properties = e.features[0].properties;
+        infoDiv.style.display = "block";
+        document.getElementById("prov_name").innerText = properties.provincia;
+        document.getElementById("prov_geo_point").innerText = properties.geo_point_2d;
+        document.getElementById("prov_ccaa").innerText = properties.ccaa;
+    }
+
+    function hideData() {
+        infoDiv.style.display = "none";
+        document.getElementById("prov_name").innerText = "";
+        document.getElementById("prov_geo_point").innerText = "";
+        document.getElementById("prov_ccaa").innerText = "";
+    }
+
+    function unfillEffect() {
+        if (hoveredStateId) {
+            map.setFeatureState(
+                { source: 'states', id: hoveredStateId },
+                { hover: false }
+            );
+        }
+        hoveredStateId = null;
+    }
+
+    function fillEffect(e) {
+        if (hoveredStateId) {
+            map.setFeatureState(
+                { source: 'states', id: hoveredStateId },
+                { hover: false }
+            );
+        }
+        hoveredStateId = e.features[0].id;
+        map.setFeatureState(
+            { source: 'states', id: hoveredStateId },
+            { hover: true }
+        );
+    }
+</script>
+</body>
+</html>
