@@ -111,7 +111,7 @@
     }
 
     function unfillEffect() {
-        if (hoveredStateId) {
+        if (hoveredStateId != null) {
             map.setFeatureState(
                 { source: 'states', id: hoveredStateId },
                 { hover: false }
@@ -121,7 +121,7 @@
     }
 
     function fillEffect(e) {
-        if (hoveredStateId) {
+        if (hoveredStateId != null) {
             map.setFeatureState(
                 { source: 'states', id: hoveredStateId },
                 { hover: false }
