@@ -14,6 +14,9 @@
     <script src="assets/js/Classes/Feature.js"></script>
     <script src="assets/js/Classes/Question.js"></script>
     <script src="assets/js/Classes/Questions.js"></script>
+    <script src="assets/js/Classes/Questions1.js"></script>
+    <script src="assets/js/Classes/Questions2.js"></script>
+    <script src="assets/js/Classes/Questions3.js"></script>
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -96,21 +99,33 @@
             <p class="chart-question-title">Pregunta 1</p>
         </div>
         <div class="collapse" id="collapseQ1">
+            <p style="text-align: center">Provincia</p>
             <canvas id="myChart1"></canvas>
+
+            <p style="text-align: center">Media</p>
+            <canvas id="myChartAvg1"></canvas>
         </div>
 
         <div class="content-question" data-toggle="collapse" data-target="#collapseQ2" aria-expanded="false" aria-controls="collapseExample">
             <p class="chart-question-title">Pregunta 2</p>
         </div>
         <div class="collapse" id="collapseQ2">
+            <p style="text-align: center">Provincia</p>
             <canvas id="myChart2"></canvas>
+
+            <p style="text-align: center">Media</p>
+            <canvas id="myChartAvg2"></canvas>
         </div>
 
         <div class="content-question" data-toggle="collapse" data-target="#collapseQ3" aria-expanded="false" aria-controls="collapseExample">
             <p class="chart-question-title">Pregunta 3</p>
         </div>
         <div class="collapse" id="collapseQ3">
+            <p style="text-align: center">Provincia</p>
             <canvas id="myChart3"></canvas>
+
+            <p style="text-align: center">Media</p>
+            <canvas id="myChartAvg3"></canvas>
         </div>
 
     </div>
@@ -121,6 +136,7 @@
 <script>
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9zcnVpemN1ZXMiLCJhIjoiY2tnaTRtaWx1MW9oeTJyczFvbWczODhsZiJ9.UIwkCrPIkJ01CR1JtPabDA';
+    var statesFeatures = new Features();
     var infoDiv = document.getElementById("info");
     var hoveredStateId = null;
     var datos;
@@ -188,39 +204,46 @@
             var chart1 = document.getElementById("myChart1");
             var chart2 = document.getElementById("myChart2");
             var chart3 = document.getElementById("myChart3");
-            document.getElementById("stateName").innerHTML = stateName;
 
+            var chart1Avg = document.getElementById("myChartAvg1");
+            var chart2Avg = document.getElementById("myChartAvg2");
+            var chart3Avg = document.getElementById("myChartAvg3");
+            document.getElementById("stateName").innerHTML = stateName;
+            statesFeatures.questions.printChartsBar(chart1Avg, chart2Avg, chart3Avg);
             questions.printChartsBar(chart1, chart2, chart3);
             // questions.printChartsPie(chart1, chart2, chart3);
         });
     });
 
     function getQ1(feature) {
-        return new Question({
-            MuyBuena : feature.properties["Q1:Muy buena"],
-            Buena : feature.properties["Q1:Buena"],
-            Nomal : feature.properties["Q1:Normal"],
-            Mala : feature.properties["Q1:Mala"],
-            MuyMala : feature.properties["Q1:Muy mala"],
-        });
+
+        return new Questions1(
+            feature.properties["Q1:Muy buena"],
+            feature.properties["Q1:Buena"],
+            feature.properties["Q1:Normal"],
+            feature.properties["Q1:Mala"],
+            feature.properties["Q1:Muy mala"],
+            feature.properties["Q1:Ns/NC"]
+        );
     }
 
     function getQ2(feature) {
-        return new Question({
-            Positiva : feature.properties["Q2:M\u00E1s bien positiva"],
-            Indiferente : feature.properties["Q2:Indiferente"],
-            Negativa : feature.properties["Q2:M\u00E1s bien negativa"],
-            NS : feature.properties["Q2:Ns/NC"],
-        });
 
+        return new Questions2(
+            feature.properties["Q2:M\u00E1s bien positiva"],
+            feature.properties["Q2:Indiferente"],
+            feature.properties["Q2:M\u00E1s bien negativa"],
+            feature.properties["Q2:Ns/NC"]
+        );
     }
 
     function getQ3(feature) {
-        return new Question({
-            Si : feature.properties['Q3:S\u00ED'],
-            No : feature.properties["Q3:No"],
-            Ns : feature.properties["Q3:Ns/NC"],
-        });
+
+        return new Questions3(
+            feature.properties['Q3:S\u00ED'],
+            feature.properties["Q3:No"],
+            feature.properties["Q3:Ns/NC"]
+        );
     }
 
     function completeData(e) {
@@ -269,8 +292,18 @@
             })
             .then(function(data) {
                 datos = data
-                console.log(data);
+                parseData(datos.features);
             });
+    }
+
+    function parseData(features) {
+        for (var i = 0; i < features.length; i++) {
+            var feature = features[i];
+            var stateName = feature.properties["provincia"];
+            var questions = new Questions(getQ1(feature), getQ2(feature), getQ3(feature));
+            statesFeatures.add(new Feature(stateName, questions));
+        }
+        statesFeatures.avg();
     }
 </script>
 </body>

@@ -1,9 +1,9 @@
 class Question {
 
-    constructor(object) {
-        this.questions = object;
-        this.quesLabel = Object.keys(this.questions);
-        this.quesData = Object.values(this.questions);
+    constructor() {
+        this.questions;
+        this.quesLabel;
+        this.quesData;
     }
 
     max() {
@@ -11,12 +11,15 @@ class Question {
     }
 
     chartBar(ctx) {
+        this.quesLabel = Object.keys(this.questions);
+        this.quesData = Object.values(this.questions);
+
         new Chart(ctx, {
             type: 'horizontalBar',
             data: {
                 labels: this.quesLabel,
                 datasets: [{
-                    barThickness: 30,
+                    barThickness: 25,
                     label: '# of Votes',
                     data: this.quesData,
                     backgroundColor: [
@@ -71,6 +74,10 @@ class Question {
     }
 
     chartPie(ctx) {
+        this.quesLabel = Object.keys(this.questions);
+        this.quesData = Object.values(this.questions);
+
+
         // And for a doughnut chart
         new Chart(ctx, {
             type: 'doughnut',
