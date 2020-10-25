@@ -9,6 +9,12 @@
     <script src="assets/js/sample-geojson.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
     <script src="assets/lib/charjs/Chart.js"></script>
+
+    <script src="assets/js/Classes/Features.js"></script>
+    <script src="assets/js/Classes/Feature.js"></script>
+    <script src="assets/js/Classes/Question.js"></script>
+    <script src="assets/js/Classes/Questions.js"></script>
+
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -74,7 +80,13 @@
     <div class="chart-container" style="width:100%">
 
         <p class="chart-question-title">Pregunta 1</p>
-        <canvas id="myChart"></canvas>
+        <canvas id="myChart1"></canvas>
+
+        <p class="chart-question-title">Pregunta 2</p>
+        <canvas id="myChart2"></canvas>
+
+        <p class="chart-question-title">Pregunta 3</p>
+        <canvas id="myChart3"></canvas>
     </div>
 </div>
 
@@ -143,10 +155,46 @@
         });
 
         map.on('click', 'state-fill', function (e) {
-            var properties = e.features[0].properties;
-            printChart(properties);
+            var feature = e.features[0];
+            var stateName = feature["provincia"];
+            var questions = new Questions(getQ1(feature), getQ2(feature), getQ3(feature));
+
+            var chart1 = document.getElementById("myChart1");
+            var chart2 = document.getElementById("myChart2");
+            var chart3 = document.getElementById("myChart3");
+
+            // questions.printChartsBar(chart1, chart2, chart3);
+            questions.printChartsPie(chart1, chart2, chart3);
         });
     });
+
+    function getQ1(feature) {
+        return new Question({
+            MuyBuena : feature.properties["Q1:Muy buena"],
+            Buena : feature.properties["Q1:Buena"],
+            Nomal : feature.properties["Q1:Normal"],
+            Mala : feature.properties["Q1:Mala"],
+            MuyMala : feature.properties["Q1:Muy mala"],
+        });
+    }
+
+    function getQ2(feature) {
+        return new Question({
+            Positiva : feature.properties["Q2:M\u00E1s bien positiva"],
+            Indiferente : feature.properties["Q2:Indiferente"],
+            Negativa : feature.properties["Q2:M\u00E1s bien negativa"],
+            NS : feature.properties["Q2:Ns/NC"],
+        });
+
+    }
+
+    function getQ3(feature) {
+        return new Question({
+            Si : feature.properties['Q3:S\u00ED'],
+            No : feature.properties["Q3:No"],
+            Ns : feature.properties["Q3:Ns/NC"],
+        });
+    }
 
     function completeData(e) {
         var properties = e.features[0].properties;
@@ -196,68 +244,6 @@
                 datos = data
                 console.log(data);
             });
-    }
-
-    function printChart(properties) {
-        var ctx = document.getElementById('myChart');
-        var myChart = new Chart(ctx, {
-            type: 'horizontalBar',
-            data: {
-                labels: ['Buena', 'Mala', 'Muy buena', 'Muy mala', 'Normal', 'Ns/NC'],
-                datasets: [{
-                    label: '# of Votes',
-                    data: [properties["Q1:Buena"], properties["Q1:Mala"], properties["Q1:Muy buena"], properties["Q1:Muy mala"], properties["Q1:Normal"], properties["Q1:Ns/NC"]],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive : true,
-                legend: {
-                    labels: {
-                        fontColor: "white"
-                    }
-                },
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true,
-                            fontColor : 'white'
-                        }
-                    }],
-                    xAxes: [{
-                        ticks: {
-                            suggestedMax: 1,
-                            fontColor : 'white'
-                        }
-                    }]
-                },
-                legend: {
-                    display: false,
-                },
-                tooltips: {
-                    callbacks: {
-                        label: tooltipItem => `${tooltipItem.yLabel}: ${tooltipItem.xLabel}`,
-                        title: () => null,
-                    }
-                },
-            }
-        });
     }
 </script>
 </body>
