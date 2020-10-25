@@ -15,6 +15,11 @@
     <script src="assets/js/Classes/Question.js"></script>
     <script src="assets/js/Classes/Questions.js"></script>
 
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -64,6 +69,14 @@
 
         .nav-side-menu .chart-container .chart-question-title {
             text-align: center;
+            margin-bottom: 0px;
+        }
+
+        .nav-side-menu .content-question {
+            padding: 20px;
+            border-bottom: 1px solid black;
+            border-top: 1px solid black;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -76,17 +89,30 @@
 </div>
 
 <div class="nav-side-menu">
-    <div class="brand">Nombre Provincia</div>
+    <div id="stateName" class="brand">Nombre Provincia</div>
     <div class="chart-container" style="width:100%">
 
-        <p class="chart-question-title">Pregunta 1</p>
-        <canvas id="myChart1"></canvas>
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ1" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 1</p>
+        </div>
+        <div class="collapse" id="collapseQ1">
+            <canvas id="myChart1"></canvas>
+        </div>
 
-        <p class="chart-question-title">Pregunta 2</p>
-        <canvas id="myChart2"></canvas>
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ2" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 2</p>
+        </div>
+        <div class="collapse" id="collapseQ2">
+            <canvas id="myChart2"></canvas>
+        </div>
 
-        <p class="chart-question-title">Pregunta 3</p>
-        <canvas id="myChart3"></canvas>
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ3" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 3</p>
+        </div>
+        <div class="collapse" id="collapseQ3">
+            <canvas id="myChart3"></canvas>
+        </div>
+
     </div>
 </div>
 
@@ -156,15 +182,16 @@
 
         map.on('click', 'state-fill', function (e) {
             var feature = e.features[0];
-            var stateName = feature["provincia"];
+            var stateName = feature.properties["provincia"];
             var questions = new Questions(getQ1(feature), getQ2(feature), getQ3(feature));
 
             var chart1 = document.getElementById("myChart1");
             var chart2 = document.getElementById("myChart2");
             var chart3 = document.getElementById("myChart3");
+            document.getElementById("stateName").innerHTML = stateName;
 
-            // questions.printChartsBar(chart1, chart2, chart3);
-            questions.printChartsPie(chart1, chart2, chart3);
+            questions.printChartsBar(chart1, chart2, chart3);
+            // questions.printChartsPie(chart1, chart2, chart3);
         });
     });
 
