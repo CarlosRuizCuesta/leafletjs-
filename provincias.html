@@ -8,6 +8,7 @@
     <script src="assets/js/PulsingDot.js"></script>
     <script src="assets/js/sample-geojson.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="assets/lib/charjs/Chart.js"></script>
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -24,6 +25,40 @@
             border-radius: 9px;
             padding: 5px 4px;
         }
+
+
+
+        .nav-side-menu {
+            overflow: auto;
+            font-family: verdana;
+            font-size: 12px;
+            font-weight: 200;
+            background-color: #2e353d;
+            position: fixed;
+            top: 0px;
+            right: 0px;
+            width: 400px;
+            height: 100%;
+            color: #e1ffff;
+        }
+
+        .nav-side-menu .brand {
+            background-color: #23282e;
+            line-height: 50px;
+            display: block;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .nav-side-menu .chart-container {
+            padding-left: 0px;
+            border-left: 3px solid #2e353d;
+            border-bottom: 1px solid #23282e;
+        }
+
+        .nav-side-menu .chart-container .chart-question-title {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -33,11 +68,24 @@
     <p>geo_point_2d: <span id="prov_geo_point"></span></p>
     <p>ccaa: <span id="prov_ccaa"></span></p>
 </div>
+
+<div class="nav-side-menu">
+    <div class="brand">Nombre Provincia</div>
+    <div class="chart-container" style="width:100%">
+
+        <p class="chart-question-title">Pregunta 1</p>
+        <canvas id="myChart"></canvas>
+    </div>
+</div>
+
+
+
 <script>
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9zcnVpemN1ZXMiLCJhIjoiY2tnaTRtaWx1MW9oeTJyczFvbWczODhsZiJ9.UIwkCrPIkJ01CR1JtPabDA';
     var infoDiv = document.getElementById("info");
     var hoveredStateId = null;
+    var datos;
     var map = new mapboxgl.Map({
         container: 'map', // container id
         style: 'mapbox://styles/mapbox/streets-v11', // style URL
@@ -45,10 +93,11 @@
         zoom: 5 // starting zoom
     });
 
-    map.on('load', function() {
-        var url = 'assets/geojson/IBES_Provincias.geojson';
+    getGeoJson()
 
-        map.addSource('states', { type: 'geojson', data: url, generateId: true});
+    map.on('load', function() {
+
+        map.addSource('states', { type: 'geojson', data: datos, generateId: true});
 
         map.addLayer({
             'id': 'state-fill',
@@ -86,12 +135,16 @@
             }
         });
 
-
         // When the mouse leaves the state-fill layer, update the feature state of the
         // previously hovered feature.
         map.on('mouseleave', 'state-fill', function () {
             unfillEffect();
             hideData();
+        });
+
+        map.on('click', 'state-fill', function (e) {
+            var properties = e.features[0].properties;
+            printChart(properties);
         });
     });
 
@@ -132,6 +185,79 @@
             { source: 'states', id: hoveredStateId },
             { hover: true }
         );
+    }
+
+    function getGeoJson() {
+        fetch("assets/geojson/IBES_Provincias.geojson")
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                datos = data
+                console.log(data);
+            });
+    }
+
+    function printChart(properties) {
+        var ctx = document.getElementById('myChart');
+        var myChart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: ['Buena', 'Mala', 'Muy buena', 'Muy mala', 'Normal', 'Ns/NC'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [properties["Q1:Buena"], properties["Q1:Mala"], properties["Q1:Muy buena"], properties["Q1:Muy mala"], properties["Q1:Normal"], properties["Q1:Ns/NC"]],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive : true,
+                legend: {
+                    labels: {
+                        fontColor: "white"
+                    }
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            fontColor : 'white'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            suggestedMax: 1,
+                            fontColor : 'white'
+                        }
+                    }]
+                },
+                legend: {
+                    display: false,
+                },
+                tooltips: {
+                    callbacks: {
+                        label: tooltipItem => `${tooltipItem.yLabel}: ${tooltipItem.xLabel}`,
+                        title: () => null,
+                    }
+                },
+            }
+        });
     }
 </script>
 </body>
