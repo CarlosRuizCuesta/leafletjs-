@@ -100,10 +100,14 @@
         </div>
         <div class="collapse" id="collapseQ1">
             <p style="text-align: center">Provincia</p>
-            <canvas id="myChart1"></canvas>
+            <div id="divChart1">
+                <canvas id="myChart1"></canvas>
+            </div>
 
             <p style="text-align: center">Media</p>
-            <canvas id="myChartAvg1"></canvas>
+            <div id="divChartAvg1">
+                <canvas id="myChartAvg1"></canvas>
+            </div>
         </div>
 
         <div class="content-question" data-toggle="collapse" data-target="#collapseQ2" aria-expanded="false" aria-controls="collapseExample">
@@ -111,10 +115,14 @@
         </div>
         <div class="collapse" id="collapseQ2">
             <p style="text-align: center">Provincia</p>
-            <canvas id="myChart2"></canvas>
+            <div id="divChart2">
+                <canvas id="myChart2"></canvas>
+            </div>
 
             <p style="text-align: center">Media</p>
-            <canvas id="myChartAvg2"></canvas>
+            <div id="divChartAvg2">
+                <canvas id="myChartAvg2"></canvas>
+            </div>
         </div>
 
         <div class="content-question" data-toggle="collapse" data-target="#collapseQ3" aria-expanded="false" aria-controls="collapseExample">
@@ -122,10 +130,14 @@
         </div>
         <div class="collapse" id="collapseQ3">
             <p style="text-align: center">Provincia</p>
-            <canvas id="myChart3"></canvas>
+            <div id="divChart3">
+                <canvas id="myChart3"></canvas>
+            </div>
 
             <p style="text-align: center">Media</p>
-            <canvas id="myChartAvg3"></canvas>
+            <div id="divChartAvg3">
+                <canvas id="myChartAvg3"></canvas>
+            </div>
         </div>
 
     </div>
@@ -185,7 +197,6 @@
         map.on('mousemove', 'state-fill', function (e) {
             if (e.features.length > 0) {
                 fillEffect(e);
-                completeData(e);
             }
         });
 
@@ -193,7 +204,6 @@
         // previously hovered feature.
         map.on('mouseleave', 'state-fill', function () {
             unfillEffect();
-            hideData();
         });
 
         map.on('click', 'state-fill', function (e) {
@@ -201,19 +211,33 @@
             var stateName = feature.properties["provincia"];
             var questions = new Questions(getQ1(feature), getQ2(feature), getQ3(feature));
 
-            var chart1 = document.getElementById("myChart1");
-            var chart2 = document.getElementById("myChart2");
-            var chart3 = document.getElementById("myChart3");
-
+            var chart1 = createCanvas(1);
+            var chart2 = createCanvas(2);
+            var chart3 = createCanvas(3);
             var chart1Avg = document.getElementById("myChartAvg1");
             var chart2Avg = document.getElementById("myChartAvg2");
             var chart3Avg = document.getElementById("myChartAvg3");
+
+            document.getElementById("myChart1").remove();
+            document.getElementById("divChart1").append(chart1)
+            document.getElementById("myChart2").remove();
+            document.getElementById("divChart2").append(chart2)
+            document.getElementById("myChart3").remove();
+            document.getElementById("divChart3").append(chart3)
+
             document.getElementById("stateName").innerHTML = stateName;
             statesFeatures.questions.printChartsBar(chart1Avg, chart2Avg, chart3Avg);
             questions.printChartsBar(chart1, chart2, chart3);
             // questions.printChartsPie(chart1, chart2, chart3);
+            // statesFeatures.questions.printChartsPie(chart1Avg, chart2Avg, chart3Avg);
         });
     });
+
+    function createCanvas(id) {
+        var g = document.createElement('canvas');
+        g.setAttribute("id", "myChart" + id);
+        return g;
+    }
 
     function getQ1(feature) {
 
@@ -244,21 +268,6 @@
             feature.properties["Q3:No"],
             feature.properties["Q3:Ns/NC"]
         );
-    }
-
-    function completeData(e) {
-        var properties = e.features[0].properties;
-        infoDiv.style.display = "block";
-        document.getElementById("prov_name").innerText = properties.provincia;
-        document.getElementById("prov_geo_point").innerText = properties.geo_point_2d;
-        document.getElementById("prov_ccaa").innerText = properties.ccaa;
-    }
-
-    function hideData() {
-        infoDiv.style.display = "none";
-        document.getElementById("prov_name").innerText = "";
-        document.getElementById("prov_geo_point").innerText = "";
-        document.getElementById("prov_ccaa").innerText = "";
     }
 
     function unfillEffect() {
