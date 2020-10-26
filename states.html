@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8" />
+    <title>Display a map</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+    <script src="assets/js/PulsingDot.js"></script>
+    <script src="assets/js/sample-geojson.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="assets/lib/charjs/Chart.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #info {
+            display: none;
+            font-size: 13px;
+            box-sizing: border-box;
+            position: absolute;
+            z-index: 40;
+            top: 12px;
+            left: 12px;
+            background-color: white;
+            border: 1px solid #999;
+            border-radius: 9px;
+            padding: 5px 4px;
+        }
+
+
+
+        .nav-side-menu {
+            overflow: auto;
+            font-family: verdana;
+            font-size: 12px;
+            font-weight: 200;
+            background-color: #2e353d;
+            position: fixed;
+            top: 0px;
+            right: 0px;
+            width: 400px;
+            height: 100%;
+            color: #e1ffff;
+        }
+
+        .nav-side-menu .brand {
+            background-color: #23282e;
+            line-height: 50px;
+            display: block;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .nav-side-menu .chart-container {
+            padding-left: 0px;
+            border-left: 3px solid #2e353d;
+            border-bottom: 1px solid #23282e;
+        }
+
+        .nav-side-menu .chart-container .chart-question-title {
+            text-align: center;
+            margin-bottom: 0px;
+        }
+
+        .nav-side-menu .content-question {
+            padding: 20px;
+            border-bottom: 1px solid black;
+            border-top: 1px solid black;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id='info'>
+    <p>provincia: <span id="prov_name"></span></p>
+    <p>geo_point_2d: <span id="prov_geo_point"></span></p>
+    <p>ccaa: <span id="prov_ccaa"></span></p>
+</div>
+
+<div class="nav-side-menu">
+    <div id="stateName" class="brand">Nombre Provincia</div>
+    <div class="chart-container" style="width:100%">
+
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ1" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 1</p>
+        </div>
+        <div class="collapse" id="collapseQ1">
+            <p style="text-align: center">Provincia</p>
+            <div id="divChart1">
+                <canvas id="myChart1"></canvas>
+            </div>
+
+            <p style="text-align: center">Media</p>
+            <div id="divChartAvg1">
+                <canvas id="myChartAvg1"></canvas>
+            </div>
+        </div>
+
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ2" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 2</p>
+        </div>
+        <div class="collapse" id="collapseQ2">
+            <p style="text-align: center">Provincia</p>
+            <div id="divChart2">
+                <canvas id="myChart2"></canvas>
+            </div>
+
+            <p style="text-align: center">Media</p>
+            <div id="divChartAvg2">
+                <canvas id="myChartAvg2"></canvas>
+            </div>
+        </div>
+
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ3" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 3</p>
+        </div>
+        <div class="collapse" id="collapseQ3">
+            <p style="text-align: center">Provincia</p>
+            <div id="divChart3">
+                <canvas id="myChart3"></canvas>
+            </div>
+
+            <p style="text-align: center">Media</p>
+            <div id="divChartAvg3">
+                <canvas id="myChartAvg3"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<script>
+
+    var statesAvg = []; // Contiene la media de las respuestas de todas las provincias
+    mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9zcnVpemN1ZXMiLCJhIjoiY2tnaTRtaWx1MW9oeTJyczFvbWczODhsZiJ9.UIwkCrPIkJ01CR1JtPabDA';
+    var hoveredStateId = null; // Almacena que provincia esta fill
+    var datos; // gejson parseado
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v11', // style URL
+        center: [-3.6474549000000005, 40.4792519], // starting position [lng, lat]
+        zoom: 5 // starting zoom
+    });
+
+    getGeoJson();
+
+    map.on('load', function() {
+
+        map.addSource('states', { type: 'geojson', data: datos, generateId: true});
+
+        map.addLayer({
+            'id': 'state-fill',
+            'type': 'fill',
+            'source': 'states',
+            'layout': {},
+            'paint': {
+                'fill-color': '#627BC1',
+                'fill-opacity': [
+                    'case',
+                    ['boolean', ['feature-state', 'hover'], false],
+                    1,
+                    0.5
+                ]
+            }
+        });
+
+        map.addLayer({
+            'id': 'state-borders',
+            'type': 'line',
+            'source': 'states',
+            'layout': {},
+            'paint': {
+                'line-color': '#627BC1',
+                'line-width': 2
+            }
+        });
+
+        // When the user moves their mouse over the state-fill layer, we'll update the
+        // feature state for the feature under the mouse.
+        map.on('mousemove', 'state-fill', function (e) {
+            if (e.features.length > 0) {
+                fillEffect(e);
+            }
+        });
+
+        // When the mouse leaves the state-fill layer, update the feature state of the
+        // previously hovered feature.
+        map.on('mouseleave', 'state-fill', function () {
+            unfillEffect();
+        });
+
+        map.on('click', 'state-fill', function (e) {
+            var feature = e.features[0].properties;
+            var stateName = feature["provincia"];
+            var q1 = getQuestion(feature, 'Q1');
+            var q2 = getQuestion(feature, 'Q2');
+            var q3 = getQuestion(feature, 'Q3');
+
+            var chart1 = createCanvas(1);
+            var chart2 = createCanvas(2);
+            var chart3 = createCanvas(3);
+            var chart1Avg = document.getElementById("myChartAvg1");
+            var chart2Avg = document.getElementById("myChartAvg2");
+            var chart3Avg = document.getElementById("myChartAvg3");
+
+            document.getElementById("myChart1").remove();
+            document.getElementById("divChart1").append(chart1)
+            document.getElementById("myChart2").remove();
+            document.getElementById("divChart2").append(chart2)
+            document.getElementById("myChart3").remove();
+            document.getElementById("divChart3").append(chart3)
+
+            document.getElementById("stateName").innerHTML = stateName;
+            // Pintar Charts
+            printBarChar(chart1, q1);
+            printBarChar(chart2, q2);
+            printBarChar(chart3, q3);
+
+            printBarChar(chart1Avg, statesAvg[0]);
+            printBarChar(chart2Avg, statesAvg[1]);
+            printBarChar(chart3Avg, statesAvg[2]);
+        });
+    });
+
+    /**
+     * Obtiene las preguntas de la feature pasando el identificador de la pregunta
+     *
+     * @param feature
+     * @param questionTitle
+     * @returns {{}}
+     */
+    function getQuestion(feature, questionTitle) {
+        var q = {};
+        for (key in feature) {
+            if (key.startsWith(questionTitle)) {
+                q[key] = feature[key]
+            }
+        }
+
+        return q
+    }
+
+    /**
+     * Deja de marcar la provincia marcada
+     */
+    function unfillEffect() {
+        if (hoveredStateId != null) {
+            map.setFeatureState(
+                { source: 'states', id: hoveredStateId },
+                { hover: false }
+            );
+        }
+        hoveredStateId = null;
+    }
+
+    /**
+     * Pinta una provincia pasada por parametro
+     * @param e
+     */
+    function fillEffect(e) {
+        if (hoveredStateId != null) {
+            map.setFeatureState(
+                { source: 'states', id: hoveredStateId },
+                { hover: false }
+            );
+        }
+        hoveredStateId = e.features[0].id;
+        map.setFeatureState(
+            { source: 'states', id: hoveredStateId },
+            { hover: true }
+        );
+    }
+
+    /**
+     * Lee el geoJson, lo almacena y hace la media
+     */
+    function getGeoJson() {
+        fetch("assets/geojson/IBES_Provincias.geojson")
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                datos = data;
+                avg();
+            });
+    }
+
+    /**
+     * Hace la media de las preguntas que hay en datos
+     */
+    function avg() {
+        var qAvg1 = {};
+        var qAvg2 = {};
+        var qAvg3 = {};
+        var count = 0;
+        console.log(datos);
+        for (index in datos.features) {
+            var feature = datos.features[index].properties;
+            var q1 = getQuestion(feature, 'Q1');
+            var q2 = getQuestion(feature, 'Q2');
+            var q3 = getQuestion(feature, 'Q3');
+            qAvg1 = sum(q1, qAvg1, count);
+            qAvg2 = sum(q2, qAvg2, count);
+            qAvg3 = sum(q3, qAvg3, count);
+            count = count + 1;
+        }
+
+        statesAvg.push(divided(qAvg1, count));
+        statesAvg.push(divided(qAvg2, count));
+        statesAvg.push(divided(qAvg3, count));
+    }
+
+    /**
+     * Divide el resultado individual de cada respuesta por el numero total
+     *
+     * @param questionAvg
+     * @param total
+     * @returns {{}} indice pregunta valor el resultado
+     */
+    function divided(questionAvg, total) {
+        var arrQuestionKey = Object.keys(questionAvg);
+        var arrQuestion = Object.values(questionAvg);
+
+        var divArray = arrQuestion.map(function (num, idx) {
+            return num / total;
+        })
+
+        return buildQuestion(arrQuestionKey, divArray);
+    }
+
+    /**
+     * Suma individualmente los dos arrays pasados por parametro
+     *
+     * @param question
+     * @param questionAvg
+     * @returns {{}} indice pregunta valor el resultado
+     */
+    function sum(question, questionAvg) {
+        var arrQuestionKey = Object.keys(question);
+        var arrQuestion = Object.values(question);
+        var arrQuestionAvg =  Object.values(questionAvg);
+        //
+        if (arrQuestionAvg.length <= 0) {
+            return question;
+        }
+        //
+        if (arrQuestion.length <= 0) {
+            return  questionAvg;
+        }
+        //
+        var sumArray = arrQuestion.map(function (num, idx) {
+            if (arrQuestionAvg[idx] == undefined) return num;
+            if (num == undefined) return arrQuestionAvg[idx]
+            return num + arrQuestionAvg[idx];
+        });
+
+        return buildQuestion(arrQuestionKey, sumArray);
+    }
+
+    /**
+     * Une arrays de datos con los indices para devolver la pregunta
+     *
+     * @param keysArray
+     * @param sumArray
+     * @returns {{}} indice pregunta valor el resultado
+     */
+    function buildQuestion(keysArray, sumArray) {
+        var question = {};
+        for (var i = 0; i < keysArray.length; i++) {
+            question[keysArray[i]] = sumArray[i]
+        }
+        return question;
+    }
+
+    /**
+     * Comprueba si el obj esta vacio
+     * @param obj
+     * @returns {boolean}
+     */
+    function isEmpty(obj) {
+        console.log(Object.keys(obj).length === 0);
+        return Object.keys(obj).length === 0;
+    }
+
+    /**
+     * Dibuja un chart de barras en el div pasado como parametro con los datos pasados
+     * @param ctx
+     * @param question
+     */
+    function printBarChar(ctx, question) {
+
+        var quesLabel = Object.keys(question);
+        var quesData = Object.values(question);
+
+        new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: quesLabel,
+                datasets: [{
+                    barThickness: 25,
+                    label: '# of Votes',
+                    data: quesData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive : true,
+                legend: {
+                    display: false,
+                    labels: {
+                        fontColor: "white"
+                    }
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            fontColor : 'white'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            suggestedMax: 1,
+                            fontColor : 'white',
+                        }
+                    }]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: tooltipItem => `${tooltipItem.yLabel}: ${tooltipItem.xLabel}`,
+                        title: () => null,
+                    }
+                },
+            }
+        });
+    }
+
+    /**
+     * Crea la etiqueta canvas y le añade el id pasado por parametro
+     * @param id
+     * @returns {HTMLCanvasElement}
+     */
+    function createCanvas(id) {
+        var g = document.createElement('canvas');
+        g.setAttribute("id", "myChart" + id);
+        return g;
+    }
+</script>
+</body>
+</html>
