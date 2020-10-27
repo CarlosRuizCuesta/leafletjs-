@@ -95,11 +95,6 @@
             <div id="divChart1">
                 <canvas id="myChart1"></canvas>
             </div>
-
-            <p style="text-align: center">Media</p>
-            <div id="divChartAvg1">
-                <canvas id="myChartAvg1"></canvas>
-            </div>
         </div>
 
         <div class="content-question" data-toggle="collapse" data-target="#collapseQ2" aria-expanded="false" aria-controls="collapseExample">
@@ -110,11 +105,6 @@
             <div id="divChart2">
                 <canvas id="myChart2"></canvas>
             </div>
-
-            <p style="text-align: center">Media</p>
-            <div id="divChartAvg2">
-                <canvas id="myChartAvg2"></canvas>
-            </div>
         </div>
 
         <div class="content-question" data-toggle="collapse" data-target="#collapseQ3" aria-expanded="false" aria-controls="collapseExample">
@@ -124,11 +114,6 @@
             <p style="text-align: center">Provincia</p>
             <div id="divChart3">
                 <canvas id="myChart3"></canvas>
-            </div>
-
-            <p style="text-align: center">Media</p>
-            <div id="divChartAvg3">
-                <canvas id="myChartAvg3"></canvas>
             </div>
         </div>
 
@@ -207,9 +192,6 @@
             var chart1 = createCanvas(1);
             var chart2 = createCanvas(2);
             var chart3 = createCanvas(3);
-            var chart1Avg = document.getElementById("myChartAvg1");
-            var chart2Avg = document.getElementById("myChartAvg2");
-            var chart3Avg = document.getElementById("myChartAvg3");
 
             document.getElementById("myChart1").remove();
             document.getElementById("divChart1").append(chart1)
@@ -219,14 +201,21 @@
             document.getElementById("divChart3").append(chart3)
 
             document.getElementById("stateName").innerHTML = stateName;
-            // Pintar Charts
-            printBarChar(chart1, q1);
-            printBarChar(chart2, q2);
-            printBarChar(chart3, q3);
 
-            printBarChar(chart1Avg, statesAvg[0]);
-            printBarChar(chart2Avg, statesAvg[1]);
-            printBarChar(chart3Avg, statesAvg[2]);
+
+            // Pinta BarCharts Group Pregunta y media
+            printGroupBarChart(chart1, q1, statesAvg[0]);
+            printGroupBarChart(chart2, q2, statesAvg[1]);
+            printGroupBarChart(chart3, q3, statesAvg[2]);
+            // Pinta BarCharts sin agrupar Solo pregunta
+            // printBarChar(chart1, q1);
+            // printBarChar(chart2, q2);
+            // printBarChar(chart3, q3);
+            // Pinta BarCharts sin agrupar mostrando diferencia entre pregunta y media
+            // printBarChar(chart1, subtraction(q1, statesAvg[0]))
+            // printBarChar(chart2, subtraction(q2, statesAvg[1]))
+            // printBarChar(chart3, subtraction(q3, statesAvg[2]))
+
         });
     });
 
@@ -301,7 +290,6 @@
         var qAvg2 = {};
         var qAvg3 = {};
         var count = 0;
-        console.log(datos);
         for (index in datos.features) {
             var feature = datos.features[index].properties;
             var q1 = getQuestion(feature, 'Q1');
@@ -366,6 +354,25 @@
     }
 
     /**
+     * Resta individualmente los dos arrays pasados por parametro
+     *
+     * @param question
+     * @param questionAvg
+     * @returns {{}} indice pregunta valor el resultado
+     */
+    function subtraction(question, questionAvg) {
+        var arrQuestionKey = Object.keys(question);
+        var arrQuestion = Object.values(question);
+        var arrQuestionAvg =  Object.values(questionAvg);
+
+        var subtractionArray = arrQuestion.map(function (num, idx) {
+            return num - arrQuestionAvg[idx];
+        });
+
+        return buildQuestion(arrQuestionKey, subtractionArray);
+    }
+
+    /**
      * Une arrays de datos con los indices para devolver la pregunta
      *
      * @param keysArray
@@ -386,7 +393,6 @@
      * @returns {boolean}
      */
     function isEmpty(obj) {
-        console.log(Object.keys(obj).length === 0);
         return Object.keys(obj).length === 0;
     }
 
@@ -406,7 +412,7 @@
                 labels: quesLabel,
                 datasets: [{
                     barThickness: 25,
-                    label: '# of Votes',
+                    label: '',
                     data: quesData,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
@@ -445,6 +451,7 @@
                     xAxes: [{
                         ticks: {
                             suggestedMax: 1,
+                            suggestedMin: -1,
                             fontColor : 'white',
                         }
                     }]
@@ -456,6 +463,74 @@
                     }
                 },
             }
+        });
+    }
+
+    /**
+     * Dibuja un chart de barras agrupado en el div agrupando los dos objetos pasados como parametro
+     * @param ctx
+     * @param question
+     */
+    function printGroupBarChart(ctx, question, questionAvg) {
+        var quesLabel = Object.keys(question);
+        var quesData = Object.values(question);
+        var quesDataAvg = Object.values(questionAvg);
+
+        var barChartData = {
+            labels: quesLabel,
+            datasets: [
+                {
+                    backgroundColor: "rgba(255, 99, 132, 0.2)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1,
+                    label: "Pregunta",
+                    data: quesData
+                },
+                {
+                    backgroundColor: "rgba(54, 162, 235, 0.2)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 1,
+                    label: "Media",
+                    data: quesDataAvg
+                },
+            ]
+        };
+
+        var chartOptions = {
+            responsive : true,
+            legend: {
+                display: true,
+                labels: {
+                    fontColor: "white"
+                }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        fontColor : 'white'
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        suggestedMax: 1,
+                        fontColor : 'white',
+                    }
+                }]
+            },
+            tooltips: {
+                callbacks: {
+                    label: tooltipItem => `${tooltipItem.yLabel}: ${tooltipItem.xLabel}`,
+                    title: () => null,
+                }
+            },
+        }
+
+
+        new Chart(ctx, {
+            type: 'horizontalBar',
+            data: barChartData,
+            options: chartOptions
         });
     }
 
