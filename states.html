@@ -185,9 +185,9 @@
         map.on('click', 'state-fill', function (e) {
             var feature = e.features[0].properties;
             var stateName = feature["provincia"];
-            var q1 = getQuestion(feature, 'Q1');
-            var q2 = getQuestion(feature, 'Q2');
-            var q3 = getQuestion(feature, 'Q3');
+            var q1 = sortQuestions1(getQuestion(feature, 'Q1'));
+            var q2 = sortQuestions2(getQuestion(feature, 'Q2'));
+            var q3 = sortQuestions3(getQuestion(feature, 'Q3'));
 
             var chart1 = createCanvas(1);
             var chart2 = createCanvas(2);
@@ -218,6 +218,41 @@
 
         });
     });
+
+    /**
+     * Ordena las preguntas de mejor a peor
+     *
+     *
+     * @param questions -> Lista de preguntas
+     * return {{}} -> Lista ordenada
+     * */
+    function sortQuestions1(questions) {
+        var obj = {};
+        obj["Q1:Muy buena"] = questions["Q1:Muy buena"];
+        obj["Q1:Buena"] = questions["Q1:Buena"];
+        obj["Q1:Normal"] = questions["Q1:Normal"];
+        obj["Q1:Mala"] = questions["Q1:Mala"];
+        obj["Q1:Muy mala"] = questions["Q1:Muy mala"];
+        obj["Q1:Ns/NC"] = questions["Q1:Ns/NC"];
+        return obj;
+    }
+
+    function sortQuestions2(questions) {
+        var obj = {};
+        obj["Q2:M\u00E1s bien positiva"] = questions["Q2:M\u00E1s bien positiva"];
+        obj["Q2:Indiferente"] = questions["Q2:Indiferente"];
+        obj["Q2:M\u00E1s bien negativa"] = questions["Q2:M\u00E1s bien negativa"];
+        obj["Q2:Ns/NC"] = questions["Q2:Ns/NC"];
+        return obj;
+    }
+
+    function sortQuestions3(questions) {
+        var obj = {};
+        obj['Q3:S\u00ED'] = questions['Q3:S\u00ED'];
+        obj["Q3:No"] = questions["Q3:No"];
+        obj["Q3:Ns/NC"] = questions["Q3:Ns/NC"];
+        return obj;
+    }
 
     /**
      * Obtiene las preguntas de la feature pasando el identificador de la pregunta
@@ -272,7 +307,7 @@
      * Lee el geoJson, lo almacena y hace la media
      */
     function getGeoJson() {
-        fetch("assets/geojson/IBES_Provincias.geojson")
+        fetch("assets/geojson/IBES_Provincias_tesela.geojson")
             .then(function(response) {
                 return response.json();
             })
@@ -301,9 +336,9 @@
             count = count + 1;
         }
 
-        statesAvg.push(divided(qAvg1, count));
-        statesAvg.push(divided(qAvg2, count));
-        statesAvg.push(divided(qAvg3, count));
+        statesAvg.push(sortQuestions1(divided(qAvg1, count)));
+        statesAvg.push(sortQuestions2(divided(qAvg2, count)));
+        statesAvg.push(sortQuestions3(divided(qAvg3, count)));
     }
 
     /**
