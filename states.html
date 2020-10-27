@@ -318,7 +318,8 @@
         var arrQuestion = Object.values(questionAvg);
 
         var divArray = arrQuestion.map(function (num, idx) {
-            return num / total;
+            var div = num / total;
+            return div.toFixed(3);
         })
 
         return buildQuestion(arrQuestionKey, divArray);
