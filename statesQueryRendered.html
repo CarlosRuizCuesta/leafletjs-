@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8" />
+    <title>Display a map</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+    <script src="assets/js/PulsingDot.js"></script>
+    <script src="assets/js/sample-geojson.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="assets/lib/charjs/Chart.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #info {
+            display: none;
+            font-size: 13px;
+            box-sizing: border-box;
+            position: absolute;
+            z-index: 40;
+            top: 12px;
+            left: 12px;
+            background-color: white;
+            border: 1px solid #999;
+            border-radius: 9px;
+            padding: 5px 4px;
+        }
+
+
+
+        .nav-side-menu {
+            overflow: auto;
+            font-family: verdana;
+            font-size: 12px;
+            font-weight: 200;
+            background-color: #2e353d;
+            position: fixed;
+            top: 0px;
+            right: 0px;
+            width: 400px;
+            height: 100%;
+            color: #e1ffff;
+        }
+
+        .nav-side-menu .brand {
+            background-color: #23282e;
+            line-height: 50px;
+            display: block;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .nav-side-menu .chart-container {
+            padding-left: 0px;
+            border-left: 3px solid #2e353d;
+            border-bottom: 1px solid #23282e;
+        }
+
+        .nav-side-menu .chart-container .chart-question-title {
+            text-align: center;
+            margin-bottom: 0px;
+        }
+
+        .nav-side-menu .content-question {
+            padding: 20px;
+            border-bottom: 1px solid black;
+            border-top: 1px solid black;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id='info'>
+    <p>provincia: <span id="prov_name"></span></p>
+    <p>geo_point_2d: <span id="prov_geo_point"></span></p>
+    <p>ccaa: <span id="prov_ccaa"></span></p>
+</div>
+
+<div class="nav-side-menu">
+    <div id="stateName" class="brand">Nombre Provincia</div>
+    <div class="chart-container" style="width:100%">
+
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ1" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 1</p>
+        </div>
+        <div class="collapse" id="collapseQ1">
+            <p style="text-align: center">Provincia</p>
+            <div id="divChart1">
+                <canvas id="myChart1"></canvas>
+            </div>
+        </div>
+
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ2" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 2</p>
+        </div>
+        <div class="collapse" id="collapseQ2">
+            <p style="text-align: center">Provincia</p>
+            <div id="divChart2">
+                <canvas id="myChart2"></canvas>
+            </div>
+        </div>
+
+        <div class="content-question" data-toggle="collapse" data-target="#collapseQ3" aria-expanded="false" aria-controls="collapseExample">
+            <p class="chart-question-title">Pregunta 3</p>
+        </div>
+        <div class="collapse" id="collapseQ3">
+            <p style="text-align: center">Provincia</p>
+            <div id="divChart3">
+                <canvas id="myChart3"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<script>
+
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiY2FybG9zcnVpemN1ZXMiLCJhIjoiY2tnaTRtaWx1MW9oeTJyczFvbWczODhsZiJ9.UIwkCrPIkJ01CR1JtPabDA';
+
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: {
+            "version": 8,
+            "name": "blank",
+            "sources": {
+                "openmaptiles": {
+                    "type": "vector",
+                    "url": ""
+                }
+            },
+            "layers": [{
+                "id": "background",
+                "type": "background",
+                "paint": {
+                    "background-color": "#1d1f20"
+                }
+            }]
+        },
+        center: [-3.6474549000000005, 40.4792519], // starting position [lng, lat]
+        zoom: 5 // starting zoom
+    });
+
+    map.on('style.load', function() {
+        map.addSource('counties', {
+            'type': 'geojson',
+            /*many types of data can be added, such as geojson, vector tiles or raster data*/
+            'data': 'assets/geojson/IBES_Provincias_tesela.geojson'
+        });
+
+        /*here we are adding a source, then a layer based on that that source*/
+
+        map.addLayer({
+            'id': 'countiesLayer',
+            'type': 'fill',    /*define the type of layer fill, line, point, fill-extrusion, background, raster, circle*/
+            'source': 'counties',
+            'layout': {
+                'visibility': 'visible'
+            },
+
+            /*there are many options for styling - this is a simple style*/
+
+            'paint': {
+                'fill-color': 'skyblue',
+                'fill-outline-color': 'white',
+                'fill-opacity': 0.9
+            }
+        });
+    });
+
+    /* Features */
+
+    function printFeatures(location, layer, fields, div) {
+        var state = map.queryRenderedFeatures(location.point);
+        var states = map.queryRenderedFeatures(location);
+        var question = getQuestions(state[0], fields);
+        var questionAvg = {};
+
+        states.forEach(function (stateTmp) {
+            var questionsTmp = getQuestions(stateTmp, fields);
+            questionAvg = sum(questionsTmp, questionAvg);
+        });
+
+        questionAvg = divided(questionAvg, states.length)
+
+        printGroupBarChart(div, question, questionAvg)
+    }
+
+    function buildQuestion(keysArray, sumArray) {
+        var question = {};
+        for (var i = 0; i < keysArray.length; i++) {
+            question[keysArray[i]] = sumArray[i]
+        }
+        return question;
+    }
+
+    function getQuestions(state, fields) {
+        var question = {};
+
+        for (i = 0; i < fields.length; i++) {
+            question[fields[i]] = state.properties[fields[i]]
+        };
+
+        return question;
+    }
+
+    /* Maths */
+
+    function sum(question, questionAvg) {
+        var arrQuestionKey = Object.keys(question);
+        var arrQuestion = Object.values(question);
+        var arrQuestionAvg =  Object.values(questionAvg);
+
+        //
+        if (arrQuestionAvg.length <= 0) {
+            return question;
+        }
+
+        //
+        if (arrQuestion.length <= 0) {
+            return  questionAvg;
+        }
+
+        //
+        var sumArray = arrQuestion.map(function (num, idx) {
+            if (arrQuestionAvg[idx] == undefined) return num;
+            if (num == undefined) return arrQuestionAvg[idx]
+            return num + arrQuestionAvg[idx];
+        });
+
+        return buildQuestion(arrQuestionKey, sumArray);
+    }
+
+    function divided(questionAvg, total) {
+        var arrQuestionKey = Object.keys(questionAvg);
+        var arrQuestion = Object.values(questionAvg);
+
+        var divArray = arrQuestion.map(function (num, idx) {
+            var div = num / total;
+            return parseFloat(div.toFixed(3));
+        })
+
+        return buildQuestion(arrQuestionKey, divArray);
+    }
+
+    function subtraction(question, questionAvg) {
+        var arrQuestionKey = Object.keys(question);
+        var arrQuestion = Object.values(question);
+        var arrQuestionAvg =  Object.values(questionAvg);
+
+        var subtractionArray = arrQuestion.map(function (num, idx) {
+            return num - arrQuestionAvg[idx];
+        });
+
+        return buildQuestion(arrQuestionKey, subtractionArray);
+    }
+
+    /* Charts */
+
+    function printGroupBarChart(ctx, question, questionAvg) {
+
+        var quesLabel = Object.keys(question);
+        var quesData = Object.values(question);
+        var quesDataAvg = Object.values(questionAvg);
+
+        var barChartData = {
+            labels: quesLabel,
+            datasets: [
+                {
+                    backgroundColor: "rgba(255, 99, 132, 0.2)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1,
+                    label: "Pregunta",
+                    data: quesData
+                },
+                {
+                    backgroundColor: "rgba(54, 162, 235, 0.2)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 1,
+                    label: "Media",
+                    data: quesDataAvg
+                },
+            ]
+        };
+
+        var chartOptions = {
+            responsive : true,
+            legend: {
+                display: true,
+                labels: {
+                    fontColor: "white"
+                }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        fontColor : 'white'
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        suggestedMax: 1,
+                        fontColor : 'white',
+                    }
+                }]
+            },
+            tooltips: {
+                callbacks: {
+                    label: tooltipItem => `${tooltipItem.yLabel}: ${tooltipItem.xLabel}`,
+                    title: () => null,
+                }
+            },
+        }
+
+        new Chart(ctx, {
+            type: 'horizontalBar',
+            data: barChartData,
+            options: chartOptions
+        });
+    }
+
+    map.on('click', function(e) {
+        printFeatures(e, 'countiesLayer', ["Q1:Muy buena", "Q1:Buena", "Q1:Normal", "Q1:Mala", "Q1:Muy mala", "Q1:Ns/NC"], 'myChart1')
+        printFeatures(e, 'countiesLayer', ["Q2:M\u00E1s bien positiva", "Q2:Indiferente", "Q2:M\u00E1s bien negativa", "Q2:Ns/NC"], 'myChart2')
+        printFeatures(e, 'countiesLayer', ["Q3:S\u00ED", "Q3:No", "Q3:Ns/NC"], 'myChart3')
+    });
+
+    //     // https://ovrdc.github.io/gis-tutorials/tutorial-data/counties.geojson
+    //     // assets/geojson/IBES_Provincias_tesela.geojson
+
+</script>
+</body>
+</html>
